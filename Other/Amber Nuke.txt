@@ -1,0 +1,1 @@
+{"version":2.1,"Characters":[],"Weapons":[],"Artifacts":[{"user":null,"ID":1684796499352,"type":"goblet","code":14,"rarity":5,"level":20,"mainSType":"Cryo DMG Bonus","subS":[{"type":"DEF","val":0},{"type":"ATK%","val":9.9},{"type":"CRIT Rate","val":7},{"type":"CRIT DMG","val":20.2}]}],"Setups":[]}

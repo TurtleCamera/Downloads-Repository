@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import string
+
+v 04s
+
+initial = np. loadtxt("initialStateDistribution. txt", dtype=float)
+transition = np. loadtxt("transitionMatrix. txt", dtype=float)
+emission = np. loadtxt("enissionMatrix. txt", dtype=float)
+observations = np.loadtxt("observations.txt", dtype=int)
+
+Vv 03s
+
+n,m, T=27, 2, 430000
+alphabet = dict(zip(range(1,28), string.ascii_lowercase + ' '))
+
+Vv 03s
+
+L = np.zeros((n,T))
+F = np.zeros((n,T))
+L[:,0] = np.log(initial[@]) + np.log(emission[:,observations(0]])
+
+Fl:,0] = initial
+s = np. full(T,
+v 01s
+
+dtype=int)
+
+def viterbi(F, L, transition, emission, observations, s):
+# FILLF and L
+for t in range(1,T):
+for 1 in range(n
+Togexp = L[:,t-11 + np.log(transition(:,il)
+max = np.argnax(logexp)
+max_logexp = logexp [max]
+Fli,t] = max
+LI4,t] = max_logexp + np. log(emission[i,observations[t]])
+for t in range(T-1,-1,-1):
+if t=T1
+st] = np.argmax(L(:,T-1]
+else:
+slt] = Flslt+1], t+1]
+word = []
+for t in range(T-1):
+if sft] t= s(tal:
+word. append (alphabet. get (s [t]+1))
+word. append (alphabet. get (s [T-1]+1))
+word = **.join(word)
+return word, s
+
+v 08s
+
+word, S = viterbi(F, L, transition, emission,observations, s)
+plt.plot(s)
+plt.show()
+print (word)

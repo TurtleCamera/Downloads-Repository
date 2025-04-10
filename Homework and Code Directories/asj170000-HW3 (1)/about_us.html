@@ -1,0 +1,115 @@
+<html>
+
+    <head>
+        <title>About Us</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html" class="highlightedTab">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div class="sidePanelContents">
+                    <h2>Sidebar Nav</h2>
+                    <p>Quickly navigate to a location on this page.</p>
+                    <a href="#">Top of the page</a><br>
+                    <a href="#about_us">About Us</a><br>
+                    <a href="#history">History</a><br>
+                    <a href="#company_values">Our Company Values</a><br>
+                    <a href="#our_team">Our Team</a>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div class="mainContent">
+                <br>
+                <h1 id="about_us" class="center">About Us</h1>
+                <br>
+                    <img class="pImgLeft" src="./images/about_us.webp" />
+                <p class="pLeft">We offer unique meals and great combinations to suit every family's needs, made with simple, high-quality ingredients. Our food department also has a great variety of fresh meat, seafood, fresh-cut flowers, baked goods, dry goods, and seasonal products. Stop by today, and you'll find a number of special promotions on the brands you know and love.</p>
+                <p>We're committed to providing food that you can trust, and that starts with our list of suppliers. These farmers grow, harvest, and package their products with top-notch quality. Check out some of the stuff we've got for you and the rest of your family.</p>
+                <p>We take great pride in offering premium meat products of the highest quality, sourced from natural and organic sources. We understand the importance of providing high-quality beef, poultry, pigmeat, and fish with exceptional juiciness, flavor, texture, and texture, and we only work with leading suppliers to ensure the highest quality each time.</p>
+
+                <br>
+
+                <h1 id="history" class="center">History</h1>
+                <br>
+                <img class="pImgRight" src="./images/timeline.png" />
+                <p>The Company was founded in 1990 by a grocery store owner who invested $100 to open its first store. Over the past 140 years, the Company has steadfastly adhered to this philosophy, remaining specific about its customers and communities, its innovation, and the people it employs. Today, the Company is the nation's largest grocery retailer, with nearly 2,800 stores located in 35 states and operating under 28 brand names. We meet the evolving needs of our customers by delivering access to fresh food to all. Our current practices owe much to our founder's early dedication to serving customers through fresh food, competitive pricing, and innovation. The story is about the people who shaped our history and continue to shape our lives every day.</p>
+                <p>Our founder was a born entrepreneur, always looking for new ways to satisfy his customers' needs. In the early 1900s, grocery stores used to buy random items from local residents and resell them at higher prices. In our founder’s opinion, this wasn’t a cool thing to do, and it was something he sold a lot of. He thought that if he could make his own products, he could lower his costs and give his customers better products instead of selling them again and again.</p>
+
+                <h1 id="company_values" class="center">Our Company Values</h1>
+                <ol>
+                    <li>Trustworthiness</li>
+                    <li>Loyalty</li>
+                    <li>Helpfulness</li>
+                </ol>
+                <br>
+                <br>
+
+                <h1 id="our_team" class="center">Our Team</h1>
+                <br>
+                <img class="pImgLeft" src="./images/group_of_ppl.jpg" />
+                <p>Our team is one of the best in the world. We all have over 150 years of experience in the grocery store industry. Despite the restrictions placed upon us by the pandemic, we have been able to maintain our flawless reputation with ease. All of our employees are the best of the best, and there has not been a single person who has questioned this fact. </p>
+                <p>You might ask, how can we possibly have 150 years of experience when we look so young? The answer is that we have manufactured a time machine capable of traveling across the space-time continuum. However, this machine is not for sale, nor will it be placed as a deal on our deals page. That's right, we are simply that good, which further emphasizes why you should buy our products. </p>
+                <p>If you would like to challenge our reputation, please head to the contact us page. Once you hit send, we will get a message which is delivered directly to our minds. That's right, email is a thing of the past for us. We will reply in 1/2^23187891738912 picoseconds of time. We realize that this is a very slow reply and are actively working on our technology to improve it. </p>
+            
+            </div>
+        </div>
+
+        <script>
+
+            // Keep all search params: 
+            [...document.querySelectorAll('a')].forEach(e=>{
+                const url = new URL(e.href)
+                for (let [k,v] of new URLSearchParams(window.location.search).entries()){
+                    url.searchParams.set(k,v)
+                }
+                e.href = url.toString();
+            })
+
+            const dateLoop = () => {
+                const date = new Date();
+                document.getElementsByClassName("storeLogo")[0].getElementsByTagName("h2")[0].innerHTML = date.toLocaleString();
+            }
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

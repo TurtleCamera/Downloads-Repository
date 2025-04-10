@@ -1,0 +1,199 @@
+<html>
+
+    <head>
+        <title>Cart</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html" class="highlightedTab">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Jump to Category</h2>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Your Cart</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/cart.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            let pageSections = [];
+
+            // const discounts = [
+            //     {
+            //         discountName: "Student discount",
+            //         percentDiscount: 25,
+            //         flatDiscount: 0
+            //     },
+            //     {
+            //         discountName: "Student discount 2",
+            //         percentDiscount: 25,
+            //         flatDiscount: 100
+            //     },
+            // ];
+
+            let discounts_string = window.localStorage.getItem("specialty_quiz");
+            let discounts = [];
+
+            try {
+                // discounts = JS/ON.par/se(discounts);
+                for(item_a of discounts_string.split("\n")) {
+
+                    item_split = item_a.split(",");
+                    discounts.push({
+                        discountName: item_split[0],
+                        percentDiscount: parseFloat(item_split[1]),
+                        flatDiscount: parseFloat(item_split[2])
+                    })
+                }
+            }
+            catch(exception) {
+                discounts = [];
+            }
+
+            if(!discounts) {
+                discounts = [];
+            }
+
+            try {
+                readSections(pageSections);
+            }
+            catch(ignored) {
+                let pageSections = [
+                    {
+                        sectionName: "Fresh Products",
+                        sectionIdentifier: "fresh_products",
+                        inventory: [
+                            {
+                                name: "Broccoli",
+                                imgPath: "./images/broccoli.jpg",
+                                price: 2.00,
+                                in_cart: 12,
+                                current_stock: 30,
+                            },
+                        ]
+                    },
+                    {
+                        sectionName: "Frozen Products",
+                        sectionIdentifier: "frozen_products",
+                        inventory: [
+                            {
+                                name: "Ham & Cheese Scamble",
+                                imgPath: "./images/ham_cheese_scramble.png",
+                                price: 15.00,
+                                in_cart: 5,
+                                current_stock: 20,
+                            },
+                        ]
+                    },
+                    {
+                        sectionName: "Pantry Items",
+                        sectionIdentifier: "pantry_items",
+                        inventory: [
+                            {
+                                name: "Campbell's Soup",
+                                imgPath: "./images/campbells_chicken_soup.webp",
+                                price: 1.00,
+                                in_cart: 4,
+                                current_stock: 25,
+                            },
+                        ]
+                    },
+                    {
+                        sectionName: "Baking Items",
+                        sectionIdentifier: "baking_items",
+                        inventory: [
+                            {
+                                name: "Pudding Mix",
+                                imgPath: "./images/pudding_mix.jpg",
+                                price: 5.00,
+                                in_cart: 6,
+                                current_stock: 30,
+                            },
+                        ]
+                    },
+                    {
+                        sectionName: "Snacks",
+                        sectionIdentifier: "snacks",
+                        inventory: [
+                            {
+                                name: "Pie Crust",
+                                imgPath: "./images/pie_crust.jpg",
+                                price: 7.00,
+                                in_cart: 7,
+                                current_stock: 30,
+                            },
+                        ]
+                    },
+                    {
+                        sectionName: "Candy",
+                        sectionIdentifier: "candy",
+                        inventory: [
+                            {
+                                name: "KitKat",
+                                imgPath: "./images/kitkat.jpg",
+                                price: 2.50,
+                                in_cart: 1,
+                                current_stock: 30,
+                            },
+                        ]
+                    },
+                ];
+            }
+           
+            loadSectionsInSidebar(pageSections, discounts);
+            loadSectionTables(pageSections, "mainId");
+            loadSectionContents(pageSections);
+            loadSpecialOffersSection(discounts, "mainId");
+            displayTotalPrice(pageSections);
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

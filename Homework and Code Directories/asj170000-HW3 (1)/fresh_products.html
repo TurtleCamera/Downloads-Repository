@@ -1,0 +1,263 @@
+<html>
+
+    <head>
+        <title>Fresh Produce</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="#" class="highlightedTab">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Filter by Category</h2>
+                    <label for="show_all" style="word-wrap:break-word" onclick="toggle()">
+                        <input id="show_all" type="checkbox" value="show_all" checked />
+                        Show All
+                    </label><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Fresh Products</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/category_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Vegetables",
+                    sectionIdentifier: "vegetables",
+                    inventory: [
+                        {
+                            name: "Broccoli",
+                            imgPath: "./images/broccoli.jpg",
+                            price: 2.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                        {
+                            name: "Carrots",
+                            imgPath: "./images/carrots.jpg",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Celery",
+                            imgPath: "./images/celery.jpg",
+                            price: 0.50,
+                            in_cart: 0,
+                            current_stock: 100,
+                        },
+                        {
+                            name: "Cucumber",
+                            imgPath: "./images/cucumber.jpg",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 100,
+                        },
+                        {
+                            name: "Ginger",
+                            imgPath: "./images/ginger.jpg",
+                            price: 1.50,
+                            in_cart: 0,
+                            current_stock: 45,
+                        },
+                        {
+                            name: "Lettuce",
+                            imgPath: "./images/lettuce.jpg",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 55,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Fruits",
+                    sectionIdentifier: "fruits",
+                    inventory: [
+                        {
+                            name: "Apple",
+                            imgPath: "./images/apple.png",
+                            price: 1.50,
+                            in_cart: 0,
+                            current_stock: 5,
+                        },
+                        {
+                            name: "Pear",
+                            imgPath: "./images/pear.png",
+                            price: 1.60,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                        {
+                            name: "Strawberries",
+                            imgPath: "./images/strawberry.avif",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 130,
+                        },
+                        {
+                            name: "Watermelon",
+                            imgPath: "./images/watermelon.webp",
+                            price: 15.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                        {
+                            name: "Blueberries",
+                            imgPath: "./images/blueberry.jpg",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Blackberries",
+                            imgPath: "./images/blackberry.jpg",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 0,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Precut Fruits",
+                    sectionIdentifier: "precut_fruits",
+                    inventory: [
+                        {
+                            name: "Sliced Watermelon",
+                            imgPath: "./images/watermelon.webp",
+                            price: 17.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Flowers",
+                    sectionIdentifier: "flowers",
+                    inventory: [
+                        {
+                            name: "Bouquet of Flowers",
+                            imgPath: "./images/bouquet.jpg",
+                            price: 17.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Salsa Dips",
+                    sectionIdentifier: "salsa_dips",
+                    inventory: [
+                        {
+                            name: "Spicy Salsa",
+                            imgPath: "./images/salsa.webp",
+                            price: 18.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Seasonal Produce",
+                    sectionIdentifier: "seasonal_produce",
+                    inventory: [
+                        {
+                            name: "Bell Pepper",
+                            imgPath: "./images/bell_pepper.jfif",
+                            price: 18.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        },
+                        {
+                            name: "Corn",
+                            imgPath: "./images/corn.webp",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "New Items",
+                    sectionIdentifier: "new_items",
+                    inventory: [
+                        {
+                            name: "New Lemons",
+                            imgPath: "./images/lemons.jfif",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Rollbacks",
+                    sectionIdentifier: "rollbacks",
+                    inventory: [
+                        {
+                            name: "Nectarine",
+                            imgPath: "./images/nectarine.jfif",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        }
+                    ]
+                },
+            ];
+
+            loadSectionsInSidebar(pageSections, "spContents");
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Fresh Products");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Fresh Products");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

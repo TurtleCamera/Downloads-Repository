@@ -1,0 +1,99 @@
+<html>
+
+    <head>
+        <title>Contact Us</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html" class="highlightedTab">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div class="sidePanelContents">
+                    <h2>Sidebar Nav</h2>
+                    <p>Quickly navigate to a location on this page.</p>
+                    <a href="#">Top of the page</a><br>
+                    <a href="#contact_us">Contact Us</a><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div class="mainContent">
+                <br>
+                <h1 id="contact_us" class="center">Contact Us</h1>
+                <h2 id="form_message"></h2>
+                <form id="contactUsForm">
+                    <label for="fname">First name:</label><br>
+                    <input type="text" id="fname" name="fname"><br>
+                    <label for="lname">Last name:</label><br>
+                    <input type="text" id="lname" name="lname"><br>
+                    <label for="phone">Phone number:</label><br>
+                    <input type="text" id="phone" name="phone"><br>
+                    <label for="email">Email:</label><br>
+                    <input type="text" id="email" name="email"><br>
+                    <label for="comment">Comment:</label><br>
+                    <textarea id="comment" name="comment" rows="10" cols="50"></textarea><br>
+                    
+                    <input type="radio" id="male" name="gender" value="male">
+                    <label for="male">Male</label><br>
+
+                    <input type="radio" id="female" name="gender" value="female">
+                    <label for="female">Female</label><br>
+
+                    <input type="radio" id="other" name="gender" value="other">
+                    <label for="other">Other</label><br>
+
+                    <input type="submit" onclick="validateForm()" value="Submit">
+                </form>
+                <!-- <button onclick="helper()">CLICK</button> -->
+            </div>
+        </div>
+
+        <script src="./scripts/contact_us_scripts.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            document.getElementById("contactUsForm").addEventListener('submit', (e) => {
+                e.preventDefault();
+            });
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

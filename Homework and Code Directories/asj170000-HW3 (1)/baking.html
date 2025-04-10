@@ -1,0 +1,138 @@
+<html>
+
+    <head>
+        <title>Baking Products</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="#" class="highlightedTab">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Jump to Category</h2>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Baking Products</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/category_based.js"></script>
+        <script src="./scripts/list_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Pie Fillings",
+                    sectionIdentifier: "pie_fillings",
+                    inventory: [
+                        {
+                            name: "Cherry Pie Filling",
+                            imgPath: "./images/cherry_pie_filling.jpg",
+                            price: 13.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Apple Filling",
+                            imgPath: "./images/apple_filling.jpg",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        }
+                    ]
+                },
+                {
+                    sectionName: "Crusts",
+                    sectionIdentifier: "crusts",
+                    inventory: [
+                        {
+                            name: "Pie Crust",
+                            imgPath: "./images/pie_crust.jpg",
+                            price: 7.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Pudding Mixes",
+                    sectionIdentifier: "pudding_mixes",
+                    inventory: [
+                        {
+                            name: "Pudding Mix",
+                            imgPath: "./images/pudding_mix.jpg",
+                            price: 5.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Pie Pans",
+                    sectionIdentifier: "pie_pans",
+                    inventory: [
+                        {
+                            name: "Pie Pan",
+                            imgPath: "./images/pie_pan.jpg",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        },
+                    ]
+                },
+            ];
+
+            loadListSectionsInSidebar(pageSections, "spContents");
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Baking");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Baking");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

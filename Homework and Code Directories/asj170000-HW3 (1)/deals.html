@@ -1,0 +1,82 @@
+<html>
+
+    <head>
+        <title>Deals</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html" class="highlightedTab">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div class="sidePanelContents">
+                    <h2>Sidebar Nav</h2>
+                    <p>Quickly navigate to a location on this page.</p>
+                    <a href="#">Top of the page</a><br>
+                    <a href="#buy1get1">Buy 1 Get 1 Free</a><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div class="mainContent">
+                <br>
+                <h1 class="center">Deals</h1>
+                <br>
+                <h2 id="buy1get1" class="center">Buy 1 Get 1 Free:</h2>
+                <br>
+                <div class="gridImage horizontalVerticalAlign">
+                    <section>
+                        <img class="pImgResize" src="./images/mixer.jpg" />
+                        <p>Mixer</p>
+                    </section>
+                    <section>
+                        <img class="pImgResize" src="./images/blender.webp" />
+                        <p>Blender</p>
+                    </section>
+                </div>
+                
+            </div>
+        </div>
+
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+            dateLoop();
+            setInterval(dateLoop, 1000);
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

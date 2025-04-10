@@ -1,0 +1,243 @@
+<html>
+
+    <head>
+        <title>Frozen Products</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html" class="highlightedTab">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Filter by Category</h2>
+                    <label for="show_all" style="word-wrap:break-word" onclick="toggle()">
+                        <input id="show_all" type="checkbox" value="show_all" checked />
+                        Show All
+                    </label><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Frozen Products</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/category_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Frozen Breakfast",
+                    sectionIdentifier: "frozen_breakfast",
+                    inventory: [
+                        {
+                            name: "Ham & Cheese Scamble",
+                            imgPath: "./images/ham_cheese_scramble.png",
+                            price: 15.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        },
+                        {
+                            name: "Frozen Pancakes",
+                            imgPath: "./images/frozen_pancakes.png",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                        {
+                            name: "Biscuit",
+                            imgPath: "./images/biscuit.png",
+                            price: 13.00,
+                            in_cart: 0,
+                            current_stock: 35,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Frozen Dessert",
+                    sectionIdentifier: "frozen_dessert",
+                    inventory: [
+                        {
+                            name: "Coconut Cake",
+                            imgPath: "./images/coconut_cake.webp",
+                            price: 8.50,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                        {
+                            name: "Vanilla Ice Cream",
+                            imgPath: "./images/vanilla_ice_cream.jpg",
+                            price: 7.50,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Lemon Ice Cream",
+                            imgPath: "./images/lemon_ice_cream.png",
+                            price: 11.50,
+                            in_cart: 0,
+                            current_stock: 35,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Frozen Meals",
+                    sectionIdentifier: "frozen_meals",
+                    inventory: [
+                        {
+                            name: "Turkey Breast Dinner",
+                            imgPath: "./images/honey_roasted.webp",
+                            price: 12.50,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                        {
+                            name: "General Tso's Chicken",
+                            imgPath: "./images/general_tsos_chicken.webp",
+                            price: 14.50,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                        {
+                            name: "Fried Chicken",
+                            imgPath: "./images/fried_chicken.webp",
+                            price: 13.50,
+                            in_cart: 0,
+                            current_stock: 20,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Frozen Pizza",
+                    sectionIdentifier: "frozen_pizza",
+                    inventory: [
+                        {
+                            name: "Pepperoni Pizza",
+                            imgPath: "./images/pepperoni_pizza.webp",
+                            price: 14.50,
+                            in_cart: 0,
+                            current_stock: 69,
+                        },
+                        {
+                            name: "Party Pizza",
+                            imgPath: "./images/party_pizza.jfif",
+                            price: 2.50,
+                            in_cart: 0,
+                            current_stock: 47,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Frozen Meat",
+                    sectionIdentifier: "frozen_meat",
+                    inventory: [
+                        {
+                            name: "Beef",
+                            imgPath: "./images/frozen_beef.jpg",
+                            price: 12.50,
+                            in_cart: 0,
+                            current_stock: 5,
+                        },
+                        {
+                            name: "Pork",
+                            imgPath: "./images/pork.jpg",
+                            price: 8.50,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                        {
+                            name: "Chicken",
+                            imgPath: "./images/chicken.jpeg",
+                            price: 10.50,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Frozen Snacks",
+                    sectionIdentifier: "frozen_snacks",
+                    inventory: [
+                        {
+                            name: "Hot Pockets",
+                            imgPath: "./images/hot_pockets.webp",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Pizza Rolls",
+                            imgPath: "./images/pizza_rolls.jfif",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Rollbacks",
+                    sectionIdentifier: "frozen_rollbacks",
+                    inventory: [
+                        {
+                            name: "Uncrustables",
+                            imgPath: "./images/uncrustables.jpg",
+                            price: 12.50,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                    ]
+                },
+            ];
+
+            loadSectionsInSidebar(pageSections, "spContents");
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Frozen Products");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Frozen Products");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

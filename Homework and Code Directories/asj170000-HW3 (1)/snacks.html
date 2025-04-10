@@ -1,0 +1,98 @@
+<html>
+
+    <head>
+        <title>Snacks</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html" class="highlightedTab">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Filter by Name</h2>
+                    <input id="search_box" type="text" value="" />
+                    <p id="results_text">Type anything to search.</p>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/filter_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Snacks",
+                    sectionIdentifier: "candy",
+                    inventory: [
+                        {
+                            name: "Chips",
+                            imgPath: "./images/chips.jfif",
+                            price: 3.50,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Cookies",
+                            imgPath: "./images/cookies.jpg",
+                            price: 4.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        }
+                    ]
+                }
+            ];
+
+            addListeners();
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Snacks");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Snacks");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package KVStore;
+option go_package = "./KVStore";
+
+service KVStore {
+  rpc Get (Key) returns (Value) {}
+
+  rpc Put (KVPair) returns (Success) {}
+}
+
+message Key {
+  string key = 1;
+}
+
+message Value {
+  int32 val = 1;
+}
+
+message KVPair {
+  string key = 1;
+  int32 val = 2;
+}
+
+message Success {
+  bool flag = 1;
+}

@@ -1,0 +1,83 @@
+<html>
+
+    <head>
+        <title>My Account</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html" class="highlightedTab">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div class="sidePanelContents">
+                    <h2>Sidebar Nav</h2>
+                    <p>Quickly navigate to a location on this page.</p>
+                    <a href="#">Top of the page</a><br>
+                    <a href="#login">Login Area</a><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div class="mainContent">
+                <br>
+                <h1 id="login" class="center">Login to Your Account</h1>
+                <br>
+                <form class="loginForm">
+                    <label for="username">Username</label><br>
+                    <input type="text" id="username" name="Username"><br>
+                    <label for="password">Password</label><br>
+                    <input type="password" id="password" name="password"><br><br>
+                    <input type="submit" value="Login">
+                </form>
+                <br>
+                </div>
+                </body>
+            </div>
+        </div>
+
+        <script>
+            const dateLoop = () => {
+                const date = new Date();
+                document.getElementsByClassName("storeLogo")[0].getElementsByTagName("h2")[0].innerHTML = date.toLocaleString();
+            }
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

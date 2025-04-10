@@ -1,0 +1,195 @@
+<html>
+
+    <head>
+        <title>Pantry</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="#" class="highlightedTab">Pantry</a>
+                <a href="./breakfast_cereal.html">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Filter by Category</h2>
+                    <label for="show_all" style="word-wrap:break-word" onclick="toggle()">
+                        <input id="show_all" type="checkbox" value="show_all" checked />
+                        Show All
+                    </label><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Pantry Items</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/category_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Canned Goods",
+                    sectionIdentifier: "canned_goods",
+                    inventory: [
+                        {
+                            name: "Campbell's Soup",
+                            imgPath: "./images/campbells_chicken_soup.webp",
+                            price: 1.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Progresso Soup",
+                            imgPath: "./images/progresso.webp",
+                            price: 2.00,
+                            in_cart: 0,
+                            current_stock: 45,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Canned Vegetables",
+                    sectionIdentifier: "canned_vegetables",
+                    inventory: [
+                        {
+                            name: "Canned Carrots",
+                            imgPath: "./images/canned_carrots.jfif",
+                            price: 0.50,
+                            in_cart: 0,
+                            current_stock: 35,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Condiments",
+                    sectionIdentifier: "condiments",
+                    inventory: [
+                        {
+                            name: "Salt",
+                            imgPath: "./images/salt.jpg",
+                            price: 5.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Sriracha",
+                            imgPath: "./images/sriracha.jpg",
+                            price: 10.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                        {
+                            name: "Ketchup",
+                            imgPath: "./images/ketchup.webp",
+                            price: 15.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Peanut Butter & Spread",
+                    sectionIdentifier: "peanut_butter_and_spread",
+                    inventory: [
+                        {
+                            name: "Peanut Butter",
+                            imgPath: "./images/peanut_butter.jpg",
+                            price: 14.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Jam",
+                            imgPath: "./images/jam.jpg",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Pasta & Pizza",
+                    sectionIdentifier: "pasta_and_pizza",
+                    inventory: [
+                        {
+                            name: "Spaghetti",
+                            imgPath: "./images/spaghetti.jfif",
+                            price: 5.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Farfalle",
+                            imgPath: "./images/farfalle.jfif",
+                            price: 8.00,
+                            in_cart: 0,
+                            current_stock: 20,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Rollbacks",
+                    sectionIdentifier: "pantry_rollbacks",
+                    inventory: [
+                        {
+                            name: "Spice Combination",
+                            imgPath: "./images/spice.webp",
+                            price: 3.00,
+                            in_cart: 0,
+                            current_stock: 45,
+                        },
+                    ]
+                },
+            ];
+
+            loadSectionsInSidebar(pageSections, "spContents");
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Pantry Items");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Pantry Items");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

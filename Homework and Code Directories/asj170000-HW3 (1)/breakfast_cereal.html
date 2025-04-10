@@ -1,0 +1,161 @@
+<html>
+
+    <head>
+        <title>Breakfast & Cereal</title>
+        <link rel="stylesheet" href="./styles/mystyle.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@100&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- Header contains logo and navbar:  -->
+        <header>
+            <div class="storeLogo">
+                <h1>H-E-S Grocery Store</h1>
+                <h2>Date</h2>
+            </div>
+            <nav>
+                <a href="./fresh_products.html">Fresh Products</a>
+                <a href="./frozen.html">Frozen</a>
+                <a href="./pantry.html">Pantry</a>
+                <a href="#" class="highlightedTab">Breakfast & Cereal</a>
+                <a href="./baking.html">Baking</a>
+                <a href="./snacks.html">Snacks</a>
+                <a href="./candy.html">Candy</a>
+                <a href="./specialty.html">Specialty Shops</a>
+                <a href="./deals.html">Deals</a>
+                <a href="./my_account.html">My Account</a>
+                <a href="./about_us.html">About Us</a>
+                <a href="./contact_us.html">Contact Us</a>
+                <a href="./cart.html">Cart</a>
+            </nav>
+        </header>
+
+        <hr>
+
+        <div class="gridContainer">
+            <!-- Side panel:  -->
+            <div class="sidePanel">
+                <div id="spContents" class="sidePanelContents">
+                    <h2>Filter by Category</h2>
+                    <label for="show_all" style="word-wrap:break-word" onclick="toggle()">
+                        <input id="show_all" type="checkbox" value="show_all" checked />
+                        Show All
+                    </label><br>
+                </div>
+            </div>
+
+            <!-- Main content:  -->
+            <div id="mainId" class="mainContent">
+                <br>
+                <h1 class="center">Fresh Products</h1>
+                <br>
+            </div>
+        </div>
+
+        <script src="./scripts/category_based.js"></script>
+        <script src="./scripts/common_functions.js"></script>
+        <script>
+
+            const pageSections = [
+                {
+                    sectionName: "Cereal Shop",
+                    sectionIdentifier: "cereal_shop",
+                    inventory: [
+                        {
+                            name: "Fruit Loops",
+                            imgPath: "./images/fruit_loops.avif",
+                            price: 12.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Pancakes & Waffles",
+                    sectionIdentifier: "pancakes_and_waffles",
+                    inventory: [
+                        {
+                            name: "Pancakes",
+                            imgPath: "./images/pancakes.jpg",
+                            price: 3.00,
+                            in_cart: 0,
+                            current_stock: 30,
+                        },
+                        {
+                            name: "Waffles",
+                            imgPath: "./images/waffles.jfif",
+                            price: 6.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Breakfast Breads",
+                    sectionIdentifier: "breakfast_breads",
+                    inventory: [
+                        {
+                            name: "Bread",
+                            imgPath: "./images/bread.jpeg",
+                            price: 5.00,
+                            in_cart: 0,
+                            current_stock: 35,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Oatmeal & Grits",
+                    sectionIdentifier: "oatmeal_and_grits",
+                    inventory: [
+                        {
+                            name: "Oatmeal",
+                            imgPath: "./images/oatmeal.jfif",
+                            price: 4.00,
+                            in_cart: 0,
+                            current_stock: 25,
+                        },
+                        {
+                            name: "Grits",
+                            imgPath: "./images/grits.jfif",
+                            price: 5.00,
+                            in_cart: 0,
+                            current_stock: 15,
+                        },
+                    ]
+                },
+                {
+                    sectionName: "Rollbacks",
+                    sectionIdentifier: "breakfast_and_cereal_rollbacks",
+                    inventory: [
+                        {
+                            name: "Boiled Eggs",
+                            imgPath: "./images/eggs_2.webp",
+                            price: 3.00,
+                            in_cart: 0,
+                            current_stock: 10,
+                        },
+                    ]
+                },
+            ];
+
+            loadSectionsInSidebar(pageSections, "spContents");
+            loadSectionTables(pageSections, "mainId");
+            loadFromSession(pageSections, "Breakfast and Cereal");
+            loadSectionContents(pageSections);
+            addSaveHook(pageSections, "Breakfast and Cereal");
+
+            dateLoop();
+            setInterval(dateLoop, 1000);
+
+        </script>
+
+    </body>
+
+    <footer>
+        <p>&copy H-E-S Grocery Store 2023</p>
+        <p>Albert Jean, asj170000</p>
+    </footer>
+
+</html>

@@ -1,0 +1,3 @@
+# CSE 251A - Project 1
+
+Nearest neighbor classification often poses computational challenges, especially with large datasets. This project explores the application of established prototype selection methodologies to enhance the efficiency of nearest neighbor classification. Leveraging insights from previous work, including DBSCAN clustering and Active Learning, the approach focuses on selecting a representative subset of prototypes from the training set. A concise pseudocode for the prototype selection algorithm is provided, and extensive experiments are conducted on the MNIST dataset using varying values of M, including M = 10000, 5000, 1000, 500, 100. Evaluation results are presented to assess the performance of the proposed method.

@@ -1,0 +1,1121 @@
+package surfstore
+
+import (
+	context "context"
+	"fmt"
+	"crypto/sha256"
+	"encoding/hex"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+)
+
+type BlockStore struct {
+	BlockMap map[string]*Block
+	UnimplementedBlockStoreServer
+}
+
+func (bs *BlockStore) GetBlock(ctx context.Context, blockHash *BlockHash) (*Block, error) {
+	// Check if the block hash exists in the block store
+	block, found := bs.BlockMap[blockHash.Hash]
+	if !found {
+		return nil, fmt.Errorf("Error finding block for hash: %s", blockHash.Hash)
+	}
+
+	return block, nil
+}
+
+func (bs *BlockStore) PutBlock(ctx context.Context, block *Block) (*Success, error) {
+	// Calculate the hash of the block's data.
+	hash := sha256.New()
+	hash.Write(block.BlockData)
+	hashBytes := hash.Sum(nil)
+
+	// Convert the hash bytes to a hexadecimal string.
+	hashString := hex.EncodeToString(hashBytes)
+
+	// Create a new Block instance with the block's data and size.
+	newBlock := &Block{
+		BlockData: block.BlockData,
+		BlockSize: block.BlockSize,
+	}
+
+	// Store the block in the block map using the hash string as the key.
+	bs.BlockMap[hashString] = newBlock
+
+	// Set the success status to true.
+	success := &Success{
+		Flag: true,
+	}
+
+	return success, nil
+}
+
+// Given a list of hashes “in”, returns a list containing the
+// hashes that are not stored in the key-value store
+func (bs *BlockStore) MissingBlocks(ctx context.Context, blockHashesIn *BlockHashes) (*BlockHashes, error) {
+	missingBlockHashes := &BlockHashes{}
+
+	// Iterate over the input list of block hashes
+	for _, hash := range blockHashesIn.Hashes {
+		// Check if the block hash exists in the BlockMap
+		_, exists := bs.BlockMap[hash]
+		if !exists {
+			// If the block hash does not exist, append it to the list of missing block hashes
+			missingBlockHashes.Hashes = append(missingBlockHashes.Hashes, hash)
+		}
+	}
+
+	// Return the list of missing block hashes
+	return missingBlockHashes, nil
+}
+
+// Return a list containing all blockHashes on this block server
+func (bs *BlockStore) GetBlockHashes(ctx context.Context, _ *emptypb.Empty) (*BlockHashes, error) {
+    // Initialize a slice to store block hashes
+	hashes := make([]string, 0, len(bs.BlockMap))
+
+    // Iterate and add all the block hashes
+    for hash := range bs.BlockMap {
+        hashes = append(hashes, hash)
+    }
+
+    // Create a BlockHashes instance
+    blockHashes := &BlockHashes{
+        Hashes: hashes,
+    }
+
+    return blockHashes, nil
+}
+
+// This line guarantees all method for BlockStore are implemented
+var _ BlockStoreInterface = new(BlockStore)
+
+func NewBlockStore() *BlockStore {
+	return &BlockStore{
+		BlockMap: map[string]*Block{},
+	}
+}
+
+package surfstore
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"sort"
+)
+
+type ConsistentHashRing struct {
+	ServerMap map[string]string
+}
+
+func (c ConsistentHashRing) GetResponsibleServer(blockHash string) string {
+	// The keys of c.ServerMap contain the hashes for the server addresses.
+	// Retrieve them from the consistent hash ring and sort them
+	hashes := make([]string, 0, len(c.ServerMap))
+	for hash := range c.ServerMap {
+		hashes = append(hashes, hash)
+	}
+	sort.Strings(hashes)
+
+	// Find the first server with hash value that's larger than the block hash
+	responsibleServer := ""
+	for _, hash := range hashes {
+		if hash > blockHash {
+			responsibleServer = c.ServerMap[hash]
+			break
+		}
+	}
+
+	// Wrap around to the first server if no server has a larger
+	// hash value than the block hash
+	if responsibleServer == "" {
+		firstServerHash := hashes[0]
+		responsibleServer = c.ServerMap[firstServerHash]
+	}
+
+	return responsibleServer
+}
+
+func (c ConsistentHashRing) Hash(addr string) string {
+	h := sha256.New()
+	h.Write([]byte(addr))
+	return hex.EncodeToString(h.Sum(nil))
+
+}
+
+func NewConsistentHashRing(serverAddrs []string) *ConsistentHashRing {
+	// Initialize the ConsistentHashRing
+	serverMap := make(map[string]string)
+	hashRing := &ConsistentHashRing{
+		ServerMap: serverMap,
+	}
+
+	// Populate ServerMap with hashed addresses
+	for _, address := range serverAddrs {
+		// Each block server will have a name in the format of "blockstore" + address
+		addressWithPrefix := "blockstore" + address
+		hashedAddr := hashRing.Hash(addressWithPrefix)
+		
+		hashRing.ServerMap[hashedAddr] = address
+	}
+
+	return hashRing
+}
+
+package surfstore
+
+import (
+	context "context"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	"fmt"
+)
+
+type MetaStore struct {
+	FileMetaMap        map[string]*FileMetaData
+	BlockStoreAddrs    []string
+	ConsistentHashRing *ConsistentHashRing
+	UnimplementedMetaStoreServer
+}
+
+func (m *MetaStore) GetFileInfoMap(ctx context.Context, _ *emptypb.Empty) (*FileInfoMap, error) {
+	// Check if the FileMetaMap is initialized
+	if m.FileMetaMap == nil {
+		m.FileMetaMap = make(map[string]*FileMetaData)
+	}
+
+	// Wrap the FileMetaMap in a FileInfoMap message and return
+	fileInfoMap := &FileInfoMap{
+		FileInfoMap: m.FileMetaMap,
+	}
+
+	return fileInfoMap, nil
+}
+
+func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) (*Version, error) {
+    // Check if the file exists in the map
+	name := fileMetaData.Filename
+	newVersion := fileMetaData.Version
+    existingFileMeta, exists := m.FileMetaMap[name]
+
+    // If the file doesn't exist, store the file and return the current newVersion
+    if !exists {
+        // Update the FileInfo values with the provided hash list
+        existingFileMeta = fileMetaData
+
+        // Update the FileInfoMap with the modified FileInfo
+        m.FileMetaMap[name] = existingFileMeta
+
+        return &Version{Version: newVersion}, nil
+    }
+
+    // Check if the new newVersion number is exactly one greater than the current newVersion number
+	oldVersion := existingFileMeta.Version
+    if newVersion != oldVersion + 1 {
+        // If not, return an error with the current newVersion number
+        return &Version{Version: -1}, fmt.Errorf("Invalid Version number. Expected Version %d", oldVersion + 1)
+    }
+
+    // Update the FileInfo values with the provided hash list
+    existingFileMeta.BlockHashList = fileMetaData.BlockHashList
+    existingFileMeta.Version = fileMetaData.Version
+
+    // Update the FileInfoMap with the modified FileInfo
+    m.FileMetaMap[name] = existingFileMeta
+
+    // Return the updated newVersion number
+    return &Version{Version: newVersion}, nil
+}
+
+// Given a list of block hashes, find out which block server they belong to
+func (m *MetaStore) GetBlockStoreMap(ctx context.Context, blockHashesIn *BlockHashes) (*BlockStoreMap, error) {
+	// Create a map to store the mapping of block store addresses to block hashes
+	storeMap := make(map[string]*BlockHashes)
+
+	// Iterate over the block store addresses
+	for _, blockStoreAddr := range m.BlockStoreAddrs {
+		storeMap[blockStoreAddr] = &BlockHashes{
+			Hashes: make([]string, 0),
+		}
+	}
+
+	// Iterate over the block hashes
+	for _, hash := range blockHashesIn.Hashes {
+		// Get the responsible server using consistent hashing
+		responsibleServer := m.ConsistentHashRing.GetResponsibleServer(hash)
+
+		// Add the block hash to the corresponding BlockHashes instance
+		storeMap[responsibleServer].Hashes = append(storeMap[responsibleServer].Hashes, hash)
+	}
+
+	// Create a BlockStoreMap instance
+	blockStoreMap := &BlockStoreMap{
+		BlockStoreMap: storeMap,
+	}
+
+	return blockStoreMap, nil
+}
+
+func (m *MetaStore) GetBlockStoreAddrs(ctx context.Context, _ *emptypb.Empty) (*BlockStoreAddrs, error) {
+	// Create a new BlockStoreAddrs instance. Variable m already contains the block store addresses.
+	blockStoreAddrs := &BlockStoreAddrs{
+		BlockStoreAddrs: m.BlockStoreAddrs,
+	}
+	
+	return blockStoreAddrs, nil
+}
+
+// This line guarantees all method for MetaStore are implemented
+var _ MetaStoreInterface = new(MetaStore)
+
+func NewMetaStore(blockStoreAddrs []string) *MetaStore {
+	return &MetaStore{
+		FileMetaMap:        map[string]*FileMetaData{},
+		BlockStoreAddrs:    blockStoreAddrs,
+		ConsistentHashRing: NewConsistentHashRing(blockStoreAddrs),
+	}
+}
+
+// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
+// versions:
+// - protoc-gen-go-grpc v1.3.0
+// - protoc             v3.12.4
+// source: pkg/surfstore/SurfStore.proto
+
+package surfstore
+
+import (
+	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
+
+const (
+	BlockStore_GetBlock_FullMethodName       = "/surfstore.BlockStore/GetBlock"
+	BlockStore_PutBlock_FullMethodName       = "/surfstore.BlockStore/PutBlock"
+	BlockStore_MissingBlocks_FullMethodName  = "/surfstore.BlockStore/MissingBlocks"
+	BlockStore_GetBlockHashes_FullMethodName = "/surfstore.BlockStore/GetBlockHashes"
+)
+
+// BlockStoreClient is the client API for BlockStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BlockStoreClient interface {
+	GetBlock(ctx context.Context, in *BlockHash, opts ...grpc.CallOption) (*Block, error)
+	PutBlock(ctx context.Context, in *Block, opts ...grpc.CallOption) (*Success, error)
+	MissingBlocks(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockHashes, error)
+	GetBlockHashes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockHashes, error)
+}
+
+type blockStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBlockStoreClient(cc grpc.ClientConnInterface) BlockStoreClient {
+	return &blockStoreClient{cc}
+}
+
+func (c *blockStoreClient) GetBlock(ctx context.Context, in *BlockHash, opts ...grpc.CallOption) (*Block, error) {
+	out := new(Block)
+	err := c.cc.Invoke(ctx, BlockStore_GetBlock_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) PutBlock(ctx context.Context, in *Block, opts ...grpc.CallOption) (*Success, error) {
+	out := new(Success)
+	err := c.cc.Invoke(ctx, BlockStore_PutBlock_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) MissingBlocks(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockHashes, error) {
+	out := new(BlockHashes)
+	err := c.cc.Invoke(ctx, BlockStore_MissingBlocks_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) GetBlockHashes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockHashes, error) {
+	out := new(BlockHashes)
+	err := c.cc.Invoke(ctx, BlockStore_GetBlockHashes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BlockStoreServer is the server API for BlockStore service.
+// All implementations must embed UnimplementedBlockStoreServer
+// for forward compatibility
+type BlockStoreServer interface {
+	GetBlock(context.Context, *BlockHash) (*Block, error)
+	PutBlock(context.Context, *Block) (*Success, error)
+	MissingBlocks(context.Context, *BlockHashes) (*BlockHashes, error)
+	GetBlockHashes(context.Context, *empty.Empty) (*BlockHashes, error)
+	mustEmbedUnimplementedBlockStoreServer()
+}
+
+// UnimplementedBlockStoreServer must be embedded to have forward compatible implementations.
+type UnimplementedBlockStoreServer struct {
+}
+
+func (UnimplementedBlockStoreServer) GetBlock(context.Context, *BlockHash) (*Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
+}
+func (UnimplementedBlockStoreServer) PutBlock(context.Context, *Block) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutBlock not implemented")
+}
+func (UnimplementedBlockStoreServer) MissingBlocks(context.Context, *BlockHashes) (*BlockHashes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MissingBlocks not implemented")
+}
+func (UnimplementedBlockStoreServer) GetBlockHashes(context.Context, *empty.Empty) (*BlockHashes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockHashes not implemented")
+}
+func (UnimplementedBlockStoreServer) mustEmbedUnimplementedBlockStoreServer() {}
+
+// UnsafeBlockStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlockStoreServer will
+// result in compilation errors.
+type UnsafeBlockStoreServer interface {
+	mustEmbedUnimplementedBlockStoreServer()
+}
+
+func RegisterBlockStoreServer(s grpc.ServiceRegistrar, srv BlockStoreServer) {
+	s.RegisterService(&BlockStore_ServiceDesc, srv)
+}
+
+func _BlockStore_GetBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHash)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).GetBlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_GetBlock_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).GetBlock(ctx, req.(*BlockHash))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_PutBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Block)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).PutBlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_PutBlock_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).PutBlock(ctx, req.(*Block))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_MissingBlocks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHashes)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).MissingBlocks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_MissingBlocks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).MissingBlocks(ctx, req.(*BlockHashes))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_GetBlockHashes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).GetBlockHashes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_GetBlockHashes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).GetBlockHashes(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BlockStore_ServiceDesc is the grpc.ServiceDesc for BlockStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BlockStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "surfstore.BlockStore",
+	HandlerType: (*BlockStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetBlock",
+			Handler:    _BlockStore_GetBlock_Handler,
+		},
+		{
+			MethodName: "PutBlock",
+			Handler:    _BlockStore_PutBlock_Handler,
+		},
+		{
+			MethodName: "MissingBlocks",
+			Handler:    _BlockStore_MissingBlocks_Handler,
+		},
+		{
+			MethodName: "GetBlockHashes",
+			Handler:    _BlockStore_GetBlockHashes_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "pkg/surfstore/SurfStore.proto",
+}
+
+const (
+	MetaStore_GetFileInfoMap_FullMethodName     = "/surfstore.MetaStore/GetFileInfoMap"
+	MetaStore_UpdateFile_FullMethodName         = "/surfstore.MetaStore/UpdateFile"
+	MetaStore_GetBlockStoreMap_FullMethodName   = "/surfstore.MetaStore/GetBlockStoreMap"
+	MetaStore_GetBlockStoreAddrs_FullMethodName = "/surfstore.MetaStore/GetBlockStoreAddrs"
+)
+
+// MetaStoreClient is the client API for MetaStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MetaStoreClient interface {
+	GetFileInfoMap(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoMap, error)
+	UpdateFile(ctx context.Context, in *FileMetaData, opts ...grpc.CallOption) (*Version, error)
+	GetBlockStoreMap(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockStoreMap, error)
+	GetBlockStoreAddrs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockStoreAddrs, error)
+}
+
+type metaStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMetaStoreClient(cc grpc.ClientConnInterface) MetaStoreClient {
+	return &metaStoreClient{cc}
+}
+
+func (c *metaStoreClient) GetFileInfoMap(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoMap, error) {
+	out := new(FileInfoMap)
+	err := c.cc.Invoke(ctx, MetaStore_GetFileInfoMap_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) UpdateFile(ctx context.Context, in *FileMetaData, opts ...grpc.CallOption) (*Version, error) {
+	out := new(Version)
+	err := c.cc.Invoke(ctx, MetaStore_UpdateFile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) GetBlockStoreMap(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockStoreMap, error) {
+	out := new(BlockStoreMap)
+	err := c.cc.Invoke(ctx, MetaStore_GetBlockStoreMap_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) GetBlockStoreAddrs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockStoreAddrs, error) {
+	out := new(BlockStoreAddrs)
+	err := c.cc.Invoke(ctx, MetaStore_GetBlockStoreAddrs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MetaStoreServer is the server API for MetaStore service.
+// All implementations must embed UnimplementedMetaStoreServer
+// for forward compatibility
+type MetaStoreServer interface {
+	GetFileInfoMap(context.Context, *empty.Empty) (*FileInfoMap, error)
+	UpdateFile(context.Context, *FileMetaData) (*Version, error)
+	GetBlockStoreMap(context.Context, *BlockHashes) (*BlockStoreMap, error)
+	GetBlockStoreAddrs(context.Context, *empty.Empty) (*BlockStoreAddrs, error)
+	mustEmbedUnimplementedMetaStoreServer()
+}
+
+// UnimplementedMetaStoreServer must be embedded to have forward compatible implementations.
+type UnimplementedMetaStoreServer struct {
+}
+
+func (UnimplementedMetaStoreServer) GetFileInfoMap(context.Context, *empty.Empty) (*FileInfoMap, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileInfoMap not implemented")
+}
+func (UnimplementedMetaStoreServer) UpdateFile(context.Context, *FileMetaData) (*Version, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFile not implemented")
+}
+func (UnimplementedMetaStoreServer) GetBlockStoreMap(context.Context, *BlockHashes) (*BlockStoreMap, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockStoreMap not implemented")
+}
+func (UnimplementedMetaStoreServer) GetBlockStoreAddrs(context.Context, *empty.Empty) (*BlockStoreAddrs, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockStoreAddrs not implemented")
+}
+func (UnimplementedMetaStoreServer) mustEmbedUnimplementedMetaStoreServer() {}
+
+// UnsafeMetaStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MetaStoreServer will
+// result in compilation errors.
+type UnsafeMetaStoreServer interface {
+	mustEmbedUnimplementedMetaStoreServer()
+}
+
+func RegisterMetaStoreServer(s grpc.ServiceRegistrar, srv MetaStoreServer) {
+	s.RegisterService(&MetaStore_ServiceDesc, srv)
+}
+
+func _MetaStore_GetFileInfoMap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetFileInfoMap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetFileInfoMap_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetFileInfoMap(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_UpdateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileMetaData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).UpdateFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_UpdateFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).UpdateFile(ctx, req.(*FileMetaData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_GetBlockStoreMap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHashes)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetBlockStoreMap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetBlockStoreMap_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetBlockStoreMap(ctx, req.(*BlockHashes))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_GetBlockStoreAddrs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetBlockStoreAddrs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetBlockStoreAddrs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetBlockStoreAddrs(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MetaStore_ServiceDesc is the grpc.ServiceDesc for MetaStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MetaStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "surfstore.MetaStore",
+	HandlerType: (*MetaStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetFileInfoMap",
+			Handler:    _MetaStore_GetFileInfoMap_Handler,
+		},
+		{
+			MethodName: "UpdateFile",
+			Handler:    _MetaStore_UpdateFile_Handler,
+		},
+		{
+			MethodName: "GetBlockStoreMap",
+			Handler:    _MetaStore_GetBlockStoreMap_Handler,
+		},
+		{
+			MethodName: "GetBlockStoreAddrs",
+			Handler:    _MetaStore_GetBlockStoreAddrs_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "pkg/surfstore/SurfStore.proto",
+}
+
+// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
+// versions:
+// - protoc-gen-go-grpc v1.3.0
+// - protoc             v3.12.4
+// source: pkg/surfstore/SurfStore.proto
+
+package surfstore
+
+import (
+	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
+const _ = grpc.SupportPackageIsVersion7
+
+const (
+	BlockStore_GetBlock_FullMethodName       = "/surfstore.BlockStore/GetBlock"
+	BlockStore_PutBlock_FullMethodName       = "/surfstore.BlockStore/PutBlock"
+	BlockStore_MissingBlocks_FullMethodName  = "/surfstore.BlockStore/MissingBlocks"
+	BlockStore_GetBlockHashes_FullMethodName = "/surfstore.BlockStore/GetBlockHashes"
+)
+
+// BlockStoreClient is the client API for BlockStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BlockStoreClient interface {
+	GetBlock(ctx context.Context, in *BlockHash, opts ...grpc.CallOption) (*Block, error)
+	PutBlock(ctx context.Context, in *Block, opts ...grpc.CallOption) (*Success, error)
+	MissingBlocks(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockHashes, error)
+	GetBlockHashes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockHashes, error)
+}
+
+type blockStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBlockStoreClient(cc grpc.ClientConnInterface) BlockStoreClient {
+	return &blockStoreClient{cc}
+}
+
+func (c *blockStoreClient) GetBlock(ctx context.Context, in *BlockHash, opts ...grpc.CallOption) (*Block, error) {
+	out := new(Block)
+	err := c.cc.Invoke(ctx, BlockStore_GetBlock_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) PutBlock(ctx context.Context, in *Block, opts ...grpc.CallOption) (*Success, error) {
+	out := new(Success)
+	err := c.cc.Invoke(ctx, BlockStore_PutBlock_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) MissingBlocks(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockHashes, error) {
+	out := new(BlockHashes)
+	err := c.cc.Invoke(ctx, BlockStore_MissingBlocks_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blockStoreClient) GetBlockHashes(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockHashes, error) {
+	out := new(BlockHashes)
+	err := c.cc.Invoke(ctx, BlockStore_GetBlockHashes_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BlockStoreServer is the server API for BlockStore service.
+// All implementations must embed UnimplementedBlockStoreServer
+// for forward compatibility
+type BlockStoreServer interface {
+	GetBlock(context.Context, *BlockHash) (*Block, error)
+	PutBlock(context.Context, *Block) (*Success, error)
+	MissingBlocks(context.Context, *BlockHashes) (*BlockHashes, error)
+	GetBlockHashes(context.Context, *empty.Empty) (*BlockHashes, error)
+	mustEmbedUnimplementedBlockStoreServer()
+}
+
+// UnimplementedBlockStoreServer must be embedded to have forward compatible implementations.
+type UnimplementedBlockStoreServer struct {
+}
+
+func (UnimplementedBlockStoreServer) GetBlock(context.Context, *BlockHash) (*Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
+}
+func (UnimplementedBlockStoreServer) PutBlock(context.Context, *Block) (*Success, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutBlock not implemented")
+}
+func (UnimplementedBlockStoreServer) MissingBlocks(context.Context, *BlockHashes) (*BlockHashes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MissingBlocks not implemented")
+}
+func (UnimplementedBlockStoreServer) GetBlockHashes(context.Context, *empty.Empty) (*BlockHashes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockHashes not implemented")
+}
+func (UnimplementedBlockStoreServer) mustEmbedUnimplementedBlockStoreServer() {}
+
+// UnsafeBlockStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlockStoreServer will
+// result in compilation errors.
+type UnsafeBlockStoreServer interface {
+	mustEmbedUnimplementedBlockStoreServer()
+}
+
+func RegisterBlockStoreServer(s grpc.ServiceRegistrar, srv BlockStoreServer) {
+	s.RegisterService(&BlockStore_ServiceDesc, srv)
+}
+
+func _BlockStore_GetBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHash)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).GetBlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_GetBlock_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).GetBlock(ctx, req.(*BlockHash))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_PutBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Block)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).PutBlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_PutBlock_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).PutBlock(ctx, req.(*Block))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_MissingBlocks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHashes)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).MissingBlocks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_MissingBlocks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).MissingBlocks(ctx, req.(*BlockHashes))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlockStore_GetBlockHashes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockStoreServer).GetBlockHashes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlockStore_GetBlockHashes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockStoreServer).GetBlockHashes(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BlockStore_ServiceDesc is the grpc.ServiceDesc for BlockStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BlockStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "surfstore.BlockStore",
+	HandlerType: (*BlockStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetBlock",
+			Handler:    _BlockStore_GetBlock_Handler,
+		},
+		{
+			MethodName: "PutBlock",
+			Handler:    _BlockStore_PutBlock_Handler,
+		},
+		{
+			MethodName: "MissingBlocks",
+			Handler:    _BlockStore_MissingBlocks_Handler,
+		},
+		{
+			MethodName: "GetBlockHashes",
+			Handler:    _BlockStore_GetBlockHashes_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "pkg/surfstore/SurfStore.proto",
+}
+
+const (
+	MetaStore_GetFileInfoMap_FullMethodName     = "/surfstore.MetaStore/GetFileInfoMap"
+	MetaStore_UpdateFile_FullMethodName         = "/surfstore.MetaStore/UpdateFile"
+	MetaStore_GetBlockStoreMap_FullMethodName   = "/surfstore.MetaStore/GetBlockStoreMap"
+	MetaStore_GetBlockStoreAddrs_FullMethodName = "/surfstore.MetaStore/GetBlockStoreAddrs"
+)
+
+// MetaStoreClient is the client API for MetaStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MetaStoreClient interface {
+	GetFileInfoMap(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoMap, error)
+	UpdateFile(ctx context.Context, in *FileMetaData, opts ...grpc.CallOption) (*Version, error)
+	GetBlockStoreMap(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockStoreMap, error)
+	GetBlockStoreAddrs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockStoreAddrs, error)
+}
+
+type metaStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMetaStoreClient(cc grpc.ClientConnInterface) MetaStoreClient {
+	return &metaStoreClient{cc}
+}
+
+func (c *metaStoreClient) GetFileInfoMap(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*FileInfoMap, error) {
+	out := new(FileInfoMap)
+	err := c.cc.Invoke(ctx, MetaStore_GetFileInfoMap_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) UpdateFile(ctx context.Context, in *FileMetaData, opts ...grpc.CallOption) (*Version, error) {
+	out := new(Version)
+	err := c.cc.Invoke(ctx, MetaStore_UpdateFile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) GetBlockStoreMap(ctx context.Context, in *BlockHashes, opts ...grpc.CallOption) (*BlockStoreMap, error) {
+	out := new(BlockStoreMap)
+	err := c.cc.Invoke(ctx, MetaStore_GetBlockStoreMap_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaStoreClient) GetBlockStoreAddrs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*BlockStoreAddrs, error) {
+	out := new(BlockStoreAddrs)
+	err := c.cc.Invoke(ctx, MetaStore_GetBlockStoreAddrs_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MetaStoreServer is the server API for MetaStore service.
+// All implementations must embed UnimplementedMetaStoreServer
+// for forward compatibility
+type MetaStoreServer interface {
+	GetFileInfoMap(context.Context, *empty.Empty) (*FileInfoMap, error)
+	UpdateFile(context.Context, *FileMetaData) (*Version, error)
+	GetBlockStoreMap(context.Context, *BlockHashes) (*BlockStoreMap, error)
+	GetBlockStoreAddrs(context.Context, *empty.Empty) (*BlockStoreAddrs, error)
+	mustEmbedUnimplementedMetaStoreServer()
+}
+
+// UnimplementedMetaStoreServer must be embedded to have forward compatible implementations.
+type UnimplementedMetaStoreServer struct {
+}
+
+func (UnimplementedMetaStoreServer) GetFileInfoMap(context.Context, *empty.Empty) (*FileInfoMap, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFileInfoMap not implemented")
+}
+func (UnimplementedMetaStoreServer) UpdateFile(context.Context, *FileMetaData) (*Version, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFile not implemented")
+}
+func (UnimplementedMetaStoreServer) GetBlockStoreMap(context.Context, *BlockHashes) (*BlockStoreMap, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockStoreMap not implemented")
+}
+func (UnimplementedMetaStoreServer) GetBlockStoreAddrs(context.Context, *empty.Empty) (*BlockStoreAddrs, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockStoreAddrs not implemented")
+}
+func (UnimplementedMetaStoreServer) mustEmbedUnimplementedMetaStoreServer() {}
+
+// UnsafeMetaStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MetaStoreServer will
+// result in compilation errors.
+type UnsafeMetaStoreServer interface {
+	mustEmbedUnimplementedMetaStoreServer()
+}
+
+func RegisterMetaStoreServer(s grpc.ServiceRegistrar, srv MetaStoreServer) {
+	s.RegisterService(&MetaStore_ServiceDesc, srv)
+}
+
+func _MetaStore_GetFileInfoMap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetFileInfoMap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetFileInfoMap_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetFileInfoMap(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_UpdateFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileMetaData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).UpdateFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_UpdateFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).UpdateFile(ctx, req.(*FileMetaData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_GetBlockStoreMap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockHashes)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetBlockStoreMap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetBlockStoreMap_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetBlockStoreMap(ctx, req.(*BlockHashes))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetaStore_GetBlockStoreAddrs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaStoreServer).GetBlockStoreAddrs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaStore_GetBlockStoreAddrs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaStoreServer).GetBlockStoreAddrs(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// MetaStore_ServiceDesc is the grpc.ServiceDesc for MetaStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var MetaStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "surfstore.MetaStore",
+	HandlerType: (*MetaStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetFileInfoMap",
+			Handler:    _MetaStore_GetFileInfoMap_Handler,
+		},
+		{
+			MethodName: "UpdateFile",
+			Handler:    _MetaStore_UpdateFile_Handler,
+		},
+		{
+			MethodName: "GetBlockStoreMap",
+			Handler:    _MetaStore_GetBlockStoreMap_Handler,
+		},
+		{
+			MethodName: "GetBlockStoreAddrs",
+			Handler:    _MetaStore_GetBlockStoreAddrs_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "pkg/surfstore/SurfStore.proto",
+}

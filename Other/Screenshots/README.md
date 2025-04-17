@@ -1,1 +1,1 @@
-This directory contains screenshots found in the "Recordings" directory of my hard drive.
+This directory contains random screenshots that I don't need to store on my hard drive.
